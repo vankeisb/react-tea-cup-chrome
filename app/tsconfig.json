@@ -1,0 +1,16 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "./build",
+    "strict": true,
+    "jsx": "react"
+  },
+  "compileOnSave": true,
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

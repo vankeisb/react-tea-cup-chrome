@@ -1,0 +1,30 @@
+{
+  "name": "react-tea-cup-dev-tools",
+  "version": "0.0.1",
+  "description": "Tea cup dev tools",
+  "author": "Rémi Van Keisbelck <remi@rvkb.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:vankeisb/react-tea-cup-chrome.git"
+  },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test-watch": "jest --watch",
+    "compile": "rimraf dist && tsc",
+    "bundle": "browserify build/index.js > bundle.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.13",
+    "browserify": "^16.2.3",
+    "jest": "^23.6.0",
+    "rimraf": "^2.6.3",
+    "ts-jest": "^23.10.5",
+    "typescript": "^3.2.4"
+  },
+  "dependencies": {
+    "react-tea-cup": "0.0.18"
+  }
+}
