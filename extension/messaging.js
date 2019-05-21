@@ -22,9 +22,4 @@
 
 }());
 
-// This sends an object to the background page
-// where it can be relayed to the inspected page
-function sendObjectToInspectedPage(message) {
-    message.tabId = chrome.devtools.inspectedWindow.tabId;
-    chrome.extension.sendMessage(message);
-}
+

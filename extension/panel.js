@@ -1,19 +1,23 @@
-// This one acts in the context of the panel in the Dev Tools
-//
-// Can use
-// chrome.devtools.*
-// chrome.extension.*
 
-document.querySelector('#executescript').addEventListener('click', function() {
-    sendObjectToInspectedPage({action: "code", content: "console.log('Inline script executed')"});
-}, false);
+var port = chrome.extension.connect({
+    name: "tea-cup dev tools comm"
+});
 
-document.querySelector('#insertscript').addEventListener('click', function() {
-    sendObjectToInspectedPage({action: "script", content: "inserted-script.js"});
-}, false);
+// Listen to messages from the background page
+port.onMessage.addListener(function (message) {
 
-document.querySelector('#insertmessagebutton').addEventListener('click', function() {
-    sendObjectToInspectedPage({action: "code", content: "document.body.innerHTML='<button>Send message to DevTools</button>'"});
-    sendObjectToInspectedPage({action: "script", content: "messageback-script.js"});
-}, false);
+    document.body.innerHTML = "<pre>" + JSON.stringify(message, null, 2) + "</pre>";
 
+    //document.querySelector('#insertmessagebutton').innerHTML = message.content;
+    // port.postMessage(message);
+});
+
+// insert content script that kicks the whole process into page
+function sendObjectToInspectedPage(message) {
+    message.tabId = chrome.devtools.inspectedWindow.tabId;
+    chrome.extension.sendMessage(message);
+}
+
+sendObjectToInspectedPage({
+    action: "script", content: "inserted-script.js"
+});

@@ -9,6 +9,7 @@ chrome.extension.onConnect.addListener(function (port) {
 
     var extensionListener = function (message, sender, sendResponse) {
 
+        debugger;
         if(message.tabId && message.content) {
 
             //Evaluate script in inspectedPage
