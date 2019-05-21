@@ -1,9 +1,10 @@
 import * as React from "react"
-import {Cmd, Dispatcher, noCmd, Program, Sub} from "react-tea-cup";
+import {Cmd, Dispatcher, noCmd, Program, Sub, DevToolsEvent, DevTools} from "react-tea-cup";
 
 
 interface Model {
     readonly count: number
+//    readonly events: ReadonlyArray<DevToolsEvent<Model,Msg>>
 }
 
 
@@ -35,11 +36,13 @@ function subscriptions(model: Model): Sub<Msg> {
 }
 
 
-export const App = () => (
-    <Program
+export const App = () => {
+    // @ts-ignore
+//    const devTools: DevTools<any, any> = window["teaCupDevTools"];
+    return <Program
         init={init}
         view={view}
         update={update}
         subscriptions={subscriptions}
-    />
-);
+    />;
+};

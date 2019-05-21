@@ -28,7 +28,8 @@
   "dependencies": {
     "@types/react": "16.7.22",
     "@types/react-dom": "16.0.11",
-    "react-tea-cup": "0.0.18",
-    "react-dom": "^16.7.0"
+    "react-tea-cup": "file:/Users/vankeisb/projects/react-tea-cup",
+    "react-dom": "^16.7.0",
+    "react": "^16.7.0"
   }
 }
