@@ -14,7 +14,8 @@
     "test": "jest",
     "test-watch": "jest --watch",
     "compile": "rimraf dist && tsc",
-    "bundle": "browserify build/index.js > bundle.js"
+    "bundle": "browserify build/index.js > bundle.js",
+    "all": "npm run compile && npm run bundle && cp bundle.js ../extension"
   },
   "devDependencies": {
     "@types/jest": "^23.3.13",
@@ -25,6 +26,9 @@
     "typescript": "^3.2.4"
   },
   "dependencies": {
-    "react-tea-cup": "0.0.18"
+    "@types/react": "16.7.22",
+    "@types/react-dom": "16.0.11",
+    "react-tea-cup": "0.0.18",
+    "react-dom": "^16.7.0"
   }
 }

@@ -1,4 +1,4 @@
-chrome.devtools.panels.create("My Panel",
+chrome.devtools.panels.create("Tea Cup",
     "MyPanelIcon.png",
     "panel.html",
     function(panel) {
