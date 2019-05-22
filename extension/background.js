@@ -10,6 +10,7 @@ chrome.extension.onConnect.addListener(function (port) {
     var extensionListener = function (message, sender, sendResponse) {
 
         debugger;
+
         if(message.tabId && message.content) {
 
             //Evaluate script in inspectedPage
@@ -21,6 +22,10 @@ chrome.extension.onConnect.addListener(function (port) {
                 chrome.tabs.executeScript(message.tabId, {file: message.content});
 
                 //Pass message to inspectedPage
+
+            } else if (message.action === "bglog") {
+                console.log(message.content);
+
             } else {
                 chrome.tabs.sendMessage(message.tabId, message, sendResponse);
             }
@@ -31,7 +36,7 @@ chrome.extension.onConnect.addListener(function (port) {
             port.postMessage(message);
         }
         sendResponse(message);
-    }
+    };
 
     // Listens to messages sent from the panel
     chrome.extension.onMessage.addListener(extensionListener);
@@ -46,5 +51,6 @@ chrome.extension.onConnect.addListener(function (port) {
 
 });
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    debugger;
     return true;
 });

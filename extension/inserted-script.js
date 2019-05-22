@@ -1,4 +1,5 @@
 window.addEventListener('tea-cup-event', event => {
+    console.log("Received from tea-cup", event);
     // received event from tea-cup, relay to chrome runtime
     chrome.extension.sendMessage({
         kind: 'tea-cup-event',
@@ -15,12 +16,4 @@ s.src = chrome.extension.getURL('page-script.js');
 //you may want to keep it.
 s.parentNode.removeChild(s);
 
-//Listen for runtime message
-// chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-//     if(message.action === 'DISPATCH-RUNTIME-MSG') {
-//         //fire an event to get duck
-//         let event = new CustomEvent('RUNTIME_MSG');
-//         window.dispatchEvent(event);
-//     }
-// });
-
+console.log("Script inserted");
