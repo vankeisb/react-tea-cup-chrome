@@ -70,17 +70,17 @@ const bannerStyle: CSSProperties = {
 
 const bannerStyleError: CSSProperties = {
     ...bannerStyle,
-    backgroundColor: "red"
+    backgroundColor: "#FF8784"
 };
 
 const bannerStyleWarning: CSSProperties = {
     ...bannerStyle,
-    backgroundColor: "orange"
+    backgroundColor: "#FFCF9E"
 };
 
 const bannerStyleSuccess: CSSProperties = {
     ...bannerStyle,
-    backgroundColor: "green"
+    backgroundColor: "#90ee90"
 };
 
 function viewBanner(dispatch: Dispatcher<Msg>, model: Model) {
@@ -108,12 +108,15 @@ function viewBanner(dispatch: Dispatcher<Msg>, model: Model) {
                 ?
                     <div style={bannerStyleWarning}>
                         {btn}
-                        You are time travelling, the app is stopped.
+                        You are time travelling, the app is stopped. Resume to re-start at the last event.
                     </div>
                 :
                     <div style={bannerStyleSuccess}>
                         {btn}
-                        App is running.
+                        { model.selected
+                            .map(() => "App is running, and ready to travel !")
+                            .withDefault("App is running. Select an event to explore and enable time-travel.")
+                        }
                     </div>
         )
 }
@@ -145,15 +148,10 @@ function view(dispatch: Dispatcher<Msg>, model:Model) {
                     </div>
                     <div style={{
                         flexGrow: 1,
-                        position: "relative"
+                        position: "relative",
+                        display: "flex"
                     }}>
-                        <ScrollPane x={false} y={true}>
-                            <div style={{
-                                paddingLeft: "8px"
-                            }}>
-                                {viewDetails(dispatch, model)}
-                            </div>
-                        </ScrollPane>
+                        {viewDetails(dispatch, model)}
                     </div>
                 </div>
             </div>
@@ -162,34 +160,62 @@ function view(dispatch: Dispatcher<Msg>, model:Model) {
 }
 
 
+const fullPageDetailsStyle: CSSProperties = {
+    display: "flex",
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.5em"
+};
+
+
 function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
     return model.selected
         .map(selectedIndex =>
             maybeOf(model.events[selectedIndex])
-                .map(event =>
-                    <>
-                        <h1>{ "#" + selectedIndex + " - " + getShortEventName(event) }</h1>
-                        <h2>Message</h2>
-                        <pre>
-                            {prettify(event.model)}
-                        </pre>
-                        <h2>Model</h2>
-                        <pre>
-                            {prettify(event.model)}
-                        </pre>
-                    </>
-                )
+                .map(event => {
+                    let msg;
+                    switch (event.tag) {
+                        case "tc-init": {
+                            msg = <p>Application init.</p>;
+                            break;
+                        }
+                        case "tc-updated": {
+                            msg =
+                                <>
+                                    <h2>Message</h2>
+                                    <pre>
+                                        {prettify(event.msg)}
+                                    </pre>
+                                </>
+                        }
+                    }
+                    return (
+                        <ScrollPane x={false} y={true}>
+                            <div style={{
+                                paddingLeft: "8px"
+                            }}>
+                                <h1>{"#" + selectedIndex + " - " + getShortEventName(event)}</h1>
+                                {msg}
+                                <h2>Model</h2>
+                                <pre>
+                                    {prettify(event.model)}
+                                </pre>
+                            </div>
+                        </ScrollPane>
+                    )
+                })
                 .withDefault(
-                    <p>
+                    <div style={fullPageDetailsStyle}>
                         Invalid event index ???
-                    </p>
+                    </div>
                 )
 
         )
         .withDefault(
-            <p>
+            <div style={fullPageDetailsStyle}>
                 Select an event
-            </p>
+            </div>
         )
 }
 
