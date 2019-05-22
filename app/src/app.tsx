@@ -1,15 +1,30 @@
 import * as React from "react"
-import {Cmd, Dispatcher, noCmd, Program, Sub, DevToolsEvent, DevTools} from "react-tea-cup";
+import {Cmd, Dispatcher, noCmd, Program, Sub, HasTime} from "react-tea-cup";
+import {onPostMessage} from "./PostMessageSub";
+
+type TeaCupEvent
+    = TcInit
+    | TcUpdate
+
+
+interface TcInit extends HasTime{
+    readonly tag: "tc-init"
+}
+
+
+interface TcUpdate extends HasTime {
+    readonly tag: "tc-updated"
+}
 
 
 interface Model {
-    readonly count: number
-//    readonly events: ReadonlyArray<DevToolsEvent<Model,Msg>>
+    readonly events: ReadonlyArray<TeaCupEvent>
 }
 
 
 type Msg
     = { tag: "no-op" }
+    | { tag: "dev-tools-msg", data: any }
 
 
 function view(dispatch: Dispatcher<Msg>, model:Model) {
@@ -27,12 +42,17 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
 
 
 function init(): [Model, Cmd<Msg>] {
-    return noCmd({count: 1});
+    return noCmd({events: []});
 }
 
 
 function subscriptions(model: Model): Sub<Msg> {
-    return Sub.none()
+    return onPostMessage(msg => {
+        return {
+            tag: "dev-tools-msg",
+            data: msg
+        }
+    })
 }
 
 

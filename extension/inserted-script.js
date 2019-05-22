@@ -1,6 +1,5 @@
 window.addEventListener('tea-cup-event', event => {
     // received event from tea-cup, relay to chrome runtime
-    debugger;
     chrome.extension.sendMessage({
         kind: 'tea-cup-event',
         detail: event.detail
@@ -8,7 +7,7 @@ window.addEventListener('tea-cup-event', event => {
 }, false);
 
 //Append your pageScript.js to "real" webpage. So will it can full access to webpate.
-var s = document.createElement('script');
+const s = document.createElement('script');
 s.src = chrome.extension.getURL('page-script.js');
 (document.head || document.documentElement).appendChild(s);
 //Our pageScript.js only add listener to window object,

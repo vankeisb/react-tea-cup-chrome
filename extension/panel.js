@@ -5,7 +5,7 @@ var port = chrome.extension.connect({
 
 // Listen to messages from the background page
 port.onMessage.addListener(function (message) {
-
+    window.postMessage(message, "*");
     document.body.innerHTML = "<pre>" + JSON.stringify(message, null, 2) + "</pre>";
 
     //document.querySelector('#insertmessagebutton').innerHTML = message.content;
@@ -21,3 +21,5 @@ function sendObjectToInspectedPage(message) {
 sendObjectToInspectedPage({
     action: "script", content: "inserted-script.js"
 });
+
+
