@@ -6,14 +6,15 @@ import {
     Program,
     Sub,
     HasTime,
-    onAnimationFrame,
     Maybe,
     just,
     nothing,
-    maybeOf
+    maybeOf, Task, Result,Tuple
 } from "react-tea-cup";
 import {onChromePortMessage} from "./ChromePortSub";
 import {ScrollPane} from "./ScrollPane";
+import {evalInInspectedWindow} from "./EvalTask";
+import {CSSProperties} from "react";
 
 type TcEvent
     = TcInit
@@ -36,12 +37,23 @@ interface TcUpdate extends HasTime {
 interface Model {
     readonly events: ReadonlyArray<TcEvent>
     readonly selected: Maybe<number>
+    readonly travelling: boolean
+    readonly evalError: Maybe<EvalError>
+}
+
+
+interface EvalError {
+    readonly code: string
+    readonly error: Error
 }
 
 
 type Msg
     = { tag: "tea-cup-event", detail: any }
     | { tag: "event-clicked", index: number }
+    | { tag: "prev-next", isNext: boolean }
+    | { tag: "toggle-travel" }
+    | { tag: "eval-result", code: string, r: Result<Error,any> }
 
 
 function prettify(obj:any) {
@@ -52,6 +64,59 @@ function prettify(obj:any) {
     );
 }
 
+const bannerStyle: CSSProperties = {
+    padding: "8px"
+};
+
+const bannerStyleError: CSSProperties = {
+    ...bannerStyle,
+    backgroundColor: "red"
+};
+
+const bannerStyleWarning: CSSProperties = {
+    ...bannerStyle,
+    backgroundColor: "orange"
+};
+
+const bannerStyleSuccess: CSSProperties = {
+    ...bannerStyle,
+    backgroundColor: "green"
+};
+
+function viewBanner(dispatch: Dispatcher<Msg>, model: Model) {
+    const btn =
+        <button
+            style={{
+                marginRight: "8px"
+            }}
+            onClick={() => dispatch({
+                tag: "toggle-travel"
+            })}
+            disabled={model.selected.type === "Nothing"}
+        >
+            { model.travelling ? "Resume" : "Travel" }
+        </button>;
+
+    return model.evalError
+        .map(err =>
+            <div style={bannerStyleError}>
+                An error occured: {err.error.message}
+            </div>
+        )
+        .withDefault(
+            model.travelling
+                ?
+                    <div style={bannerStyleWarning}>
+                        {btn}
+                        You are time travelling, the app is stopped.
+                    </div>
+                :
+                    <div style={bannerStyleSuccess}>
+                        {btn}
+                        App is running.
+                    </div>
+        )
+}
 
 function view(dispatch: Dispatcher<Msg>, model:Model) {
     if (model.events.length === 0) {
@@ -62,25 +127,34 @@ function view(dispatch: Dispatcher<Msg>, model:Model) {
         return (
             <div style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: "column",
                 flexGrow: 1
             }}>
+                {viewBanner(dispatch, model)}
                 <div style={{
-                    width: "200px",
-                    position: "relative",
-                    borderRight: "1px solid gray"
+                    display: "flex",
+                    flexDirection: "row",
+                    flexGrow: 1
                 }}>
-                    <ScrollPane x={false} y={true}>
+                    <div style={{
+                        borderRight: "1px solid gray",
+                        display: "flex",
+                        flexDirection: "column"
+                    }}>
                         {viewTimeline(dispatch, model)}
-                    </ScrollPane>
-                </div>
-                <div style={{
-                    flexGrow: 1,
-                    position: "relative"
-                }}>
-                    <ScrollPane x={false} y={true}>
-                        {viewDetails(dispatch, model)}
-                    </ScrollPane>
+                    </div>
+                    <div style={{
+                        flexGrow: 1,
+                        position: "relative"
+                    }}>
+                        <ScrollPane x={false} y={true}>
+                            <div style={{
+                                paddingLeft: "8px"
+                            }}>
+                                {viewDetails(dispatch, model)}
+                            </div>
+                        </ScrollPane>
+                    </div>
                 </div>
             </div>
         )
@@ -96,7 +170,9 @@ function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
                     <>
                         <h1>{ "#" + selectedIndex + " - " + getShortEventName(event) }</h1>
                         <h2>Message</h2>
-                        <p>TODO</p>
+                        <pre>
+                            {prettify(event.model)}
+                        </pre>
                         <h2>Model</h2>
                         <pre>
                             {prettify(event.model)}
@@ -147,32 +223,73 @@ function viewTimeline(dispatch: Dispatcher<Msg>, model: Model) {
     }
 
     return (
-        <ul>
-            { model.events.map((event,index) => {
-                let shortMsg;
-                switch (event.tag) {
-                    case "tc-init":
-                        shortMsg = "init";
-                        break;
-                    case "tc-updated":
-                        shortMsg = "update";
-                        break;
-                }
-                const elemText = "#" + index + " - " + getShortEventName(event);
-                return (
-                    <li key={index}>
-                        { model.selected
-                            .map(selectedIndex =>
-                                selectedIndex === index
-                                    ? elemText
-                                    : lnk(index, elemText)
-                            )
-                            .withDefault(lnk(index, elemText))
+        <>
+            <div style={{
+                paddingLeft: "8px",
+                paddingRight: "8px"
+            }}>
+                <h1>Events ({model.events.length})</h1>
+                <div>
+                    <button
+                        disabled={model.selected
+                            .map(i => i === 0)
+                            .withDefault(true)
                         }
-                    </li>
-                )
-            })}
-        </ul>
+                        onClick={() => dispatch({
+                            tag: "prev-next",
+                            isNext: false
+                        })}
+                    >
+                        {"<- prev"}
+                    </button>
+                    <button
+                        disabled={model.selected
+                            .map(i => i === model.events.length - 1)
+                            .withDefault(true)
+                        }
+                        onClick={() => dispatch({
+                            tag: "prev-next",
+                            isNext: true
+                        })}
+                    >
+                        {"next ->"}
+                    </button>
+                </div>
+            </div>
+            <div style={{
+                flexGrow: 1,
+                position: "relative"
+            }}>
+                <ScrollPane x={false} y={true}>
+                    <ul>
+                        { model.events.map((event,index) => {
+                            let shortMsg;
+                            switch (event.tag) {
+                                case "tc-init":
+                                    shortMsg = "init";
+                                    break;
+                                case "tc-updated":
+                                    shortMsg = "update";
+                                    break;
+                            }
+                            const elemText = "#" + index + " - " + getShortEventName(event);
+                            return (
+                                <li key={index}>
+                                    { model.selected
+                                        .map(selectedIndex =>
+                                            selectedIndex === index
+                                                ? elemText
+                                                : lnk(index, elemText)
+                                        )
+                                        .withDefault(lnk(index, elemText))
+                                    }
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </ScrollPane>
+            </div>
+        </>
     )
 }
 
@@ -214,19 +331,93 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
                 }
             }
         }
+
         case "event-clicked":
+            return setSelected(model, just(msg.index));
+
+        case "prev-next":
+            return setSelected(
+                model,
+                model.selected
+                    .map(i => {
+                        if (msg.isNext) {
+                            return Math.min(model.events.length -1, i + 1);
+                        } else {
+                            return Math.max(0, i - 1);
+                        }
+                    })
+            );
+
+        case "toggle-travel": {
+            // send code into injected page so to "pilot" the devtools
+            const newModel = {...model, travelling: !model.travelling };
+            if (model.travelling) {
+                // resume program
+                return Tuple.t2n(
+                    {
+                        ...newModel,
+                        selected: nothing
+                    },
+                    evalInPage("teaCupDevTools.resume();")
+                );
+            } else {
+                // travel to selected (if any)
+                return setSelected(newModel, newModel.selected);
+            }
+        }
+
+        case "eval-result":
             return noCmd({
                 ...model,
-                selected: just(msg.index)
-            })
+                evalError: msg.r.match(
+                    (s:any) => nothing,
+                    (e:Error) => just({
+                        error: e,
+                        code: msg.code
+                    })
+                )
+            });
     }
 }
+
+function setSelected(model:Model, selected: Maybe<number>): [Model, Cmd<Msg>] {
+    return Tuple.t2n(
+        {
+            ...model,
+            selected: selected
+        },
+        selected
+            .map(s =>
+                model.travelling
+                    ? evalInPage(`teaCupDevTools.travelTo(${s});`)
+                    : Cmd.none<Msg>()
+            )
+            .withDefault(Cmd.none())
+    );
+}
+
+
+function evalInPage(code: string): Cmd<Msg> {
+    return Task.attempt(
+        evalInInspectedWindow(code),
+        (r:Result<Error,any>) => {
+            return {
+                tag: "eval-result",
+                code: code,
+                r: r
+            };
+        }
+    );
+}
+
 
 
 function init(): [Model, Cmd<Msg>] {
     return noCmd({
         events: [],
-        selected: nothing
+        selected: nothing,
+        travelling: false,
+        evalError: nothing
     });
 }
 
