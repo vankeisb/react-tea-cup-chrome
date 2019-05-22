@@ -9,7 +9,7 @@ import {
     Maybe,
     just,
     nothing,
-    maybeOf, Task, Result,Tuple
+    maybeOf, Task, Result, Tuple, DevTools
 } from "react-tea-cup";
 import {onChromePortMessage} from "./ChromePortSub";
 import {ScrollPane} from "./ScrollPane";
@@ -510,8 +510,6 @@ function portMsgToMsg(portMsg:any): Msg {
 
 
 export const App = () => {
-    // @ts-ignore
-//    const devTools: DevTools<any, any> = window["teaCupDevTools"];
     return <Program
         init={init}
         view={view}
