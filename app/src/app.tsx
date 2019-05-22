@@ -1,6 +1,19 @@
 import * as React from "react"
-import {Cmd, Dispatcher, noCmd, Program, Sub, HasTime, onAnimationFrame, Maybe, just, nothing} from "react-tea-cup";
+import {
+    Cmd,
+    Dispatcher,
+    noCmd,
+    Program,
+    Sub,
+    HasTime,
+    onAnimationFrame,
+    Maybe,
+    just,
+    nothing,
+    maybeOf
+} from "react-tea-cup";
 import {onChromePortMessage} from "./ChromePortSub";
+import {ScrollPane} from "./ScrollPane";
 
 type TcEvent
     = TcInit
@@ -22,22 +35,13 @@ interface TcUpdate extends HasTime {
 
 interface Model {
     readonly events: ReadonlyArray<TcEvent>
+    readonly selected: Maybe<number>
 }
 
 
 type Msg
-    = TeaCupEvent
-    | NoOp
-
-
-interface NoOp {
-    readonly tag: "noop"
-}
-
-interface TeaCupEvent {
-    readonly tag: "tea-cup-event"
-    readonly detail: any
-}
+    = { tag: "tea-cup-event", detail: any }
+    | { tag: "event-clicked", index: number }
 
 
 function prettify(obj:any) {
@@ -50,53 +54,131 @@ function prettify(obj:any) {
 
 
 function view(dispatch: Dispatcher<Msg>, model:Model) {
-
-    function msgCell(e:TcEvent) {
-        switch (e.tag) {
-            case "tc-init": {
-                return "init";
-            }
-            case "tc-updated": {
-                return prettify(e.msg);
-            }
-        }
-    }
-
     if (model.events.length === 0) {
         return (
             <p>No events</p>
         )
     } else {
         return (
-            <table>
-                <tbody>
-                { model.events.map((event,index) =>
-                    <tr key={index}>
-                        <td>
-                            { index }
-                        </td>
-                        <td>
-                            { event.time }
-                        </td>
-                        <td>
-                            { msgCell(event) }
-                        </td>
-                        <td>
-                            { prettify(event.model) }
-                        </td>
-                    </tr>
-                )}
-                </tbody>
-            </table>
+            <div style={{
+                display: "flex",
+                flexDirection: "row",
+                flexGrow: 1
+            }}>
+                <div style={{
+                    width: "200px",
+                    position: "relative",
+                    borderRight: "1px solid gray"
+                }}>
+                    <ScrollPane x={false} y={true}>
+                        {viewTimeline(dispatch, model)}
+                    </ScrollPane>
+                </div>
+                <div style={{
+                    flexGrow: 1,
+                    position: "relative"
+                }}>
+                    <ScrollPane x={false} y={true}>
+                        {viewDetails(dispatch, model)}
+                    </ScrollPane>
+                </div>
+            </div>
         )
     }
 }
 
 
+function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
+    return model.selected
+        .map(selectedIndex =>
+            maybeOf(model.events[selectedIndex])
+                .map(event =>
+                    <>
+                        <h1>{ "#" + selectedIndex + " - " + getShortEventName(event) }</h1>
+                        <h2>Message</h2>
+                        <p>TODO</p>
+                        <h2>Model</h2>
+                        <pre>
+                            {prettify(event.model)}
+                        </pre>
+                    </>
+                )
+                .withDefault(
+                    <p>
+                        Invalid event index ???
+                    </p>
+                )
+
+        )
+        .withDefault(
+            <p>
+                Select an event
+            </p>
+        )
+}
+
+
+function getShortEventName(e:TcEvent): string {
+    switch (e.tag) {
+        case "tc-init":
+            return "init";
+        case "tc-updated":
+            return "update";
+    }
+}
+
+function viewTimeline(dispatch: Dispatcher<Msg>, model: Model) {
+
+    function lnk(i:number, elemText: string) {
+        return (
+            <a
+                href="#"
+                onClick={e => {
+                    e.preventDefault();
+                    dispatch({
+                        tag: "event-clicked",
+                        index: i
+                    });
+                }}
+            >
+                {elemText}
+            </a>
+        )
+    }
+
+    return (
+        <ul>
+            { model.events.map((event,index) => {
+                let shortMsg;
+                switch (event.tag) {
+                    case "tc-init":
+                        shortMsg = "init";
+                        break;
+                    case "tc-updated":
+                        shortMsg = "update";
+                        break;
+                }
+                const elemText = "#" + index + " - " + getShortEventName(event);
+                return (
+                    <li key={index}>
+                        { model.selected
+                            .map(selectedIndex =>
+                                selectedIndex === index
+                                    ? elemText
+                                    : lnk(index, elemText)
+                            )
+                            .withDefault(lnk(index, elemText))
+                        }
+                    </li>
+                )
+            })}
+        </ul>
+    )
+}
+
+
 function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
     switch (msg.tag) {
-        case "noop":
-            return noCmd(model);
         case "tea-cup-event": {
             switch (msg.detail.tag) {
                 case "dev-tools-ready": {
@@ -132,12 +214,20 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
                 }
             }
         }
+        case "event-clicked":
+            return noCmd({
+                ...model,
+                selected: just(msg.index)
+            })
     }
 }
 
 
 function init(): [Model, Cmd<Msg>] {
-    return noCmd({events: []});
+    return noCmd({
+        events: [],
+        selected: nothing
+    });
 }
 
 
