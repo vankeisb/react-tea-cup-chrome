@@ -287,7 +287,15 @@ function viewTimeline(dispatch: Dispatcher<Msg>, model: Model) {
                 position: "relative"
             }}>
                 <ScrollPane x={false} y={true}>
-                    <ul>
+                    <table className="events">
+                        <thead>
+                        <tr>
+                            <th> </th>
+                            <th>#</th>
+                            <th>time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         { model.events.map((event,index) => {
                             let shortMsg;
                             switch (event.tag) {
@@ -298,21 +306,38 @@ function viewTimeline(dispatch: Dispatcher<Msg>, model: Model) {
                                     shortMsg = "update";
                                     break;
                             }
-                            const elemText = "#" + index + " - " + getShortEventName(event);
+
+                            const selected = model.selected
+                                .map(i => i === index)
+                                .withDefault(false);
+
+                            const className = selected ? " active" : "";
+
                             return (
-                                <li key={index}>
-                                    { model.selected
-                                        .map(selectedIndex =>
-                                            selectedIndex === index
-                                                ? elemText
-                                                : lnk(index, elemText)
-                                        )
-                                        .withDefault(lnk(index, elemText))
-                                    }
-                                </li>
+                                <tr key={index}
+                                    className={"row" + className}
+                                    onClick={() => {
+                                        if (!selected) {
+                                            dispatch({
+                                                tag: "event-clicked",
+                                                index: index
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <th className="row-head">
+                                    </th>
+                                    <td>
+                                        { index }
+                                    </td>
+                                    <td>
+                                        { event.time }
+                                    </td>
+                                </tr>
                             )
                         })}
-                    </ul>
+                        </tbody>
+                    </table>
                 </ScrollPane>
             </div>
         </>

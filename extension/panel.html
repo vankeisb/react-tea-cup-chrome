@@ -1,5 +1,45 @@
 <!DOCTYPE html>
 <html style="height: 100%; width: 100%">
+<head>
+    <style type="text/css">
+        table.events {
+            width: 100%;
+            border-spacing: 0;
+        }
+
+        table.events .row:hover {
+            cursor: pointer;
+        }
+
+        table.events .row .row-head {
+            width: 4px;
+            background-color: white;
+            border-left: 2px solid transparent;
+            border-top: 1px solid transparent;
+            border-bottom: 1px solid transparent;
+        }
+
+        table.events .row td {
+            border-top: 1px solid transparent;
+            border-bottom: 1px solid transparent;
+        }
+
+        table.events .row.active td {
+            font-style: italic;
+            border-top: 1px solid lightgray;
+            border-bottom: 1px solid lightgray;
+
+        }
+
+        table.events .row.active .row-head {
+            border-left: 2px solid black;
+            border-top: 1px solid lightgray;
+            border-bottom: 1px solid lightgray;
+        }
+
+
+    </style>
+</head>
 <body style="height: 100%; width: 100%; margin: 0">
 <div id="app" style="
     position: absolute;
