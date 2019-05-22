@@ -54,6 +54,8 @@ type Msg
     | { tag: "prev-next", isNext: boolean }
     | { tag: "toggle-travel" }
     | { tag: "eval-result", code: string, r: Result<Error,any> }
+    | { tag: "log-msg", index:number }
+    | { tag: "log-model", index:number }
 
 
 function prettify(obj:any) {
@@ -187,6 +189,12 @@ function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
                                     <pre>
                                         {prettify(event.msg)}
                                     </pre>
+                                    <button onClick={() => dispatch({
+                                        tag: "log-msg",
+                                        index: selectedIndex
+                                    })}>
+                                        log in console
+                                    </button>
                                 </>
                         }
                     }
@@ -201,6 +209,12 @@ function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
                                 <pre>
                                     {prettify(event.model)}
                                 </pre>
+                                <button onClick={() => dispatch({
+                                    tag: "log-model",
+                                    index: selectedIndex
+                                })}>
+                                    log in console
+                                </button>
                             </div>
                         </ScrollPane>
                     )
@@ -428,6 +442,20 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
                     })
                 )
             });
+
+        case "log-model":
+            return Tuple.t2n(
+                model,
+                evalInPage(`console.dir(teaCupDevTools.events[${msg.index}].modelAfter || teaCupDevTools.events[${msg.index}].model);`)
+            );
+
+        case "log-msg":
+            return Tuple.t2n(
+                model,
+                evalInPage(`console.dir(teaCupDevTools.events[${msg.index}].msg);`)
+            );
+
+
     }
 }
 
