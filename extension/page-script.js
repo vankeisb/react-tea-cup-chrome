@@ -25,12 +25,12 @@ function toSerializableEvent(e) {
     };
     switch (e.tag) {
         case "init":
-            res.model = e.model;
+            res.model = toSerializableAny(e.model);
             break;
         case "updated":
             res.msgNum = e.msg.msgNum;
             res.msg = toSerializableAny(e.msg);
-            res.model = e.modelAfter;
+            res.model = toSerializableAny(e.modelAfter);
             break;
     }
     return res;
