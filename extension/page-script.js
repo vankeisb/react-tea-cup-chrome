@@ -31,6 +31,7 @@ function toSerializableEvent(e) {
             res.msgNum = e.msg.msgNum;
             res.msg = toSerializableAny(e.msg);
             res.model = toSerializableAny(e.modelAfter);
+            res.cmd = toSerializableAny(e.cmd);
             break;
     }
     return res;

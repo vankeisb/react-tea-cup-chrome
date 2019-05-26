@@ -9,7 +9,7 @@ import {
     Maybe,
     just,
     nothing,
-    maybeOf, Task, Result, Tuple, DevTools
+    maybeOf, Task, Result, Tuple
 } from "react-tea-cup";
 import {onChromePortMessage} from "./ChromePortSub";
 import {ScrollPane} from "./ScrollPane";
@@ -31,6 +31,7 @@ interface TcUpdate extends HasTime {
     readonly tag: "tc-updated"
     readonly msg: any
     readonly model: any
+    readonly cmd: any
 }
 
 
@@ -56,6 +57,7 @@ type Msg
     | { tag: "eval-result", code: string, r: Result<Error,any> }
     | { tag: "log-msg", index:number }
     | { tag: "log-model", index:number }
+    | { tag: "log-cmd", index:number }
 
 
 function prettify(obj:any) {
@@ -191,6 +193,16 @@ function viewDetails(dispatch: Dispatcher<Msg>, model: Model) {
                                     </pre>
                                     <button onClick={() => dispatch({
                                         tag: "log-msg",
+                                        index: selectedIndex
+                                    })}>
+                                        log in console
+                                    </button>
+                                    <h3>Command</h3>
+                                    <pre>
+                                        {prettify(event.cmd)}
+                                    </pre>
+                                    <button onClick={() => dispatch({
+                                        tag: "log-cmd",
                                         index: selectedIndex
                                     })}>
                                         log in console
@@ -455,7 +467,11 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
                 evalInPage(`console.dir(teaCupDevTools.events[${msg.index}].msg);`)
             );
 
-
+        case "log-cmd":
+            return Tuple.t2n(
+                model,
+                evalInPage(`console.dir(teaCupDevTools.events[${msg.index}].cmd);`)
+            );
     }
 }
 
@@ -520,7 +536,8 @@ function fromSerializableEvent(e:any): Maybe<TcEvent> {
                 tag: "tc-updated",
                 time: e.time,
                 model: e.model,
-                msg: e.msg
+                msg: e.msg,
+                cmd: e.cmd
             })
         }
         default:

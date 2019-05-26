@@ -1,5 +1,4 @@
 window.addEventListener('tea-cup-event', event => {
-    console.log("Received from tea-cup", event);
     // received event from tea-cup, relay to chrome runtime
     chrome.extension.sendMessage({
         kind: 'tea-cup-event',
@@ -15,5 +14,3 @@ s.src = chrome.extension.getURL('page-script.js');
 //so we don't need it after it finish its job. But depend your case,
 //you may want to keep it.
 s.parentNode.removeChild(s);
-
-console.log("Script inserted");

@@ -9,7 +9,6 @@ let subs: ChromePortSub<any>[] = [];
 
 // Listen to messages from the background page
 port.onMessage.addListener((message:any) => {
-    console.log("Got message from bg page", message);
     subs.forEach(s => s.trigger(message));
 });
 
