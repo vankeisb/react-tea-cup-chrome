@@ -372,6 +372,7 @@ function viewTimeline(dispatch: Dispatcher<Msg>, model: Model) {
 
 
 function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
+    console.log("msg", msg);
     switch (msg.tag) {
         case "tea-cup-event": {
             switch (msg.detail.tag) {
@@ -386,7 +387,8 @@ function update(msg:Msg, model:Model): [Model, Cmd<Msg>] {
                     });
                     return noCmd({
                         ...model,
-                        events: model.events.concat(newEvents)
+                        events: newEvents,
+                        selected: nothing
                     });
                 }
                 default: {
